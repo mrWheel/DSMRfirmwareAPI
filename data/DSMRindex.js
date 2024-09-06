@@ -381,15 +381,28 @@
     fetch(APIGW+"v1/sm/actual")
       .then(response => response.json())
       .then(json => {
+          console.log("presentationType["+presentationType+"]");
+          //console.log("Length of presentationType: " + presentationType.length);
+          console.log("Type of showActualTable:", typeof showActualTable); // Should be "function"
           console.log("parsed .., fields is ["+ JSON.stringify(json)+"]");
           data = json.actual;
           copyActualToChart(data);
-          if (presentationType == "TAB")
-                showActualTable(data);
+          if (presentationType.toUpperCase() === "TAB") 
+          { 
+              try {
+                  showActualTable(data);
+              } catch (e) {
+                  console.error("Error executing showActualTable: ", e);
+              }
+        
+              console.log("execute showActualTable()");
+              showActualTable(data);
+          }
           else  showActualGraph(data);
-          //console.log("-->done..");
+          console.log("-->done..");
       })
       .catch(function(error) {
+        console.error("Fetch error: ", error);
         var p = document.createElement('p');
         p.appendChild(
           document.createTextNode('Error: ' + error.message)
@@ -458,6 +471,7 @@
           //console.log("-->done..");
       })
       .catch(function(error) {
+        console.error("Fetch error: ", error);
         var p = document.createElement('p');
         p.appendChild(
           document.createTextNode('Error: ' + error.message)
@@ -642,9 +656,11 @@
   //============================================================================  
   function showActualTable(data)
   { 
+    console.log("showActual()???");
+    
     if (activeTab != "ActualTab") return;
 
-    console.log("showActual()");
+    console.log("yes! showActual()");
 
     for (var i in data) 
     {

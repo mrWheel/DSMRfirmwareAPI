@@ -117,32 +117,37 @@ var myGasChart;
   function renderGasChart(dataSet, labelString) {
     //console.log("Now in renderGasChart() ..");
     
-    if (myGasChart) {
-      myGasChart.destroy();
-    }
+    try {
+        if (myGasChart) {
+          myGasChart.destroy();
+        }
 
-    var ctxGas = document.getElementById("gasChart").getContext("2d");
-    myGasChart = new Chart(ctxGas, {
-      type: 'line',
-      data: dataSet,
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales: {
-          yAxes: [{
-            ticks : {
-              beginAtZero : true,
-            },
-            scaleLabel: {
-              display: true,
-              labelString: labelString,
-            },
-          }]
-        } // scales
-      } // options
+        var ctxGas = document.getElementById("gasChart").getContext("2d");
+        myGasChart = new Chart(ctxGas, {
+          type: 'line',
+          data: dataSet,
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+              yAxes: [{
+                ticks : {
+                  beginAtZero : true,
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: labelString,
+                },
+              }]
+            } // scales
+          } // options
 
-    });
-    
+        });
+
+    } catch (err) {
+        console.log("renderGasChart() Error: " + err.message);
+    }    
+
   } // renderGasChart()
   
   
@@ -268,7 +273,7 @@ var myGasChart;
     electrData.stack    = [];     // empty .stack
     electrData.datasets = [];     // empty .datasets
     
-    gasData       = {};     // empty electrData
+    gasData       = {};     // empty gasData
     gasData.labels      = [];     // empty .labels
     gasData.stack       = [];     // empty .stack
     gasData.datasets    = [];     // empty .datasets
@@ -352,63 +357,67 @@ var myGasChart;
   //============================================================================  
   function copyActualToChart(data)
   {
-    //console.log("Now in copyActualToChart()..");
-    
-    for (i in data)
-    {
-      //console.log("["+i+"] name["+data[i].name+"]");
-      if (data[i].name == "timestamp")  
+    console.log("Now in copyActualToChart()..");
+    try {
+      for (i in data)
       {
-        //console.log("i["+i+"] label["+data[i].value+"]");
-        if (data[i].value == actLabel)
+        //console.log("["+i+"] name["+data[i].name+"]");
+        if (data[i].name === "timestamp")  
         {
-          console.log("actLabel["+actLabel+"] == value["+data[i].value+"] =>break!");
-          return;
+          //console.log("i["+i+"] label["+data[i].value+"]");
+          if (data[i].value === actLabel)
+          {
+            console.log("actLabel["+actLabel+"] === value["+data[i].value+"] =>break!");
+            return;
+          }
+          actElectrData.labels.push(formatGraphDate("Actual", data[i].value)); // adds x axis labels (timestamp)
+          actGasData.labels.push(formatGraphDate("Actual", data[i].value)); // adds x axis labels (timestamp)
+          actLabel = data[i].value;
         }
-        actElectrData.labels.push(formatGraphDate("Actual", data[i].value)); // adds x axis labels (timestamp)
-        actGasData.labels.push(formatGraphDate("Actual", data[i].value)); // adds x axis labels (timestamp)
-        actLabel = data[i].value;
-      }
+        if (data[i].name == "power_delivered_total")      
+        if (data[i].name == "power_delivered_l1") 
+          actElectrData.datasets[0].data[actPoint]  = (data[i].value).toFixed(3);
+        if (data[i].name == "power_delivered_l2") 
+          actElectrData.datasets[1].data[actPoint]  = (data[i].value).toFixed(3);
+        if (data[i].name == "power_delivered_l3") 
+          actElectrData.datasets[2].data[actPoint]  = (data[i].value).toFixed(3);
+        if (data[i].name == "power_returned_l1")  
+          actElectrData.datasets[3].data[actPoint]  = (data[i].value * -1.0).toFixed(3);
+        if (data[i].name == "power_returned_l2")  
+          actElectrData.datasets[4].data[actPoint]  = (data[i].value * -1.0).toFixed(3);
+        if (data[i].name == "power_returned_l3")  
+          actElectrData.datasets[5].data[actPoint]  = (data[i].value * -1.0).toFixed(3);
+        if (data[i].name == "gas_delivered") 
+        {
+          if (actPoint > 0)
+                actGasData.datasets[0].data[actPoint] = ((data[i].value - gasDelivered) * 1000.0).toFixed(0);
+          else  actGasData.datasets[0].data[actPoint] = 0.0;
+          gasDelivered = data[i].value;
+        }
+      } // for i in data ..
+      actPoint++;    
       
-      if (data[i].name == "power_delivered_l1") 
-        actElectrData.datasets[0].data[actPoint]  = (data[i].value).toFixed(3);
-      if (data[i].name == "power_delivered_l2") 
-        actElectrData.datasets[1].data[actPoint]  = (data[i].value).toFixed(3);
-      if (data[i].name == "power_delivered_l3") 
-        actElectrData.datasets[2].data[actPoint]  = (data[i].value).toFixed(3);
-      if (data[i].name == "power_returned_l1")  
-        actElectrData.datasets[3].data[actPoint]  = (data[i].value * -1.0).toFixed(3);
-      if (data[i].name == "power_returned_l2")  
-        actElectrData.datasets[4].data[actPoint]  = (data[i].value * -1.0).toFixed(3);
-      if (data[i].name == "power_returned_l3")  
-        actElectrData.datasets[5].data[actPoint]  = (data[i].value * -1.0).toFixed(3);
-      if (data[i].name == "gas_delivered") 
+      if (actPoint > maxPoints) 
       {
-        if (actPoint > 0)
-              actGasData.datasets[0].data[actPoint] = ((data[i].value - gasDelivered) * 1000.0).toFixed(0);
-        else  actGasData.datasets[0].data[actPoint] = 0.0;
-        gasDelivered = data[i].value;
-      }
-    } // for i in data ..
-    actPoint++;    
-    
-    if (actPoint > maxPoints) 
-    {
-      for (let s=0; s<6; s++)
-      {
-        actElectrData.labels.shift();
-        actElectrData.datasets[0].data.shift();
-        actElectrData.datasets[1].data.shift();
-        actElectrData.datasets[2].data.shift();
-        actElectrData.datasets[3].data.shift();
-        actElectrData.datasets[4].data.shift();
-        actElectrData.datasets[5].data.shift();
-        actGasData.labels.shift();
-        actGasData.datasets[0].data.shift();
-        actPoint--;
-      } // for s ..
-    } 
-    
+        for (let s=0; s<6; s++)
+        {
+          actElectrData.labels.shift();
+          actElectrData.datasets[0].data.shift();
+          actElectrData.datasets[1].data.shift();
+          actElectrData.datasets[2].data.shift();
+          actElectrData.datasets[3].data.shift();
+          actElectrData.datasets[4].data.shift();
+          actElectrData.datasets[5].data.shift();
+          actGasData.labels.shift();
+          actGasData.datasets[0].data.shift();
+          actPoint--;
+        } // for s ..
+      } 
+
+    } catch (error) {
+      console.error("Error in copyActualToChart:", error);
+    }
+     
   } // copyActualToChart()
 
   
@@ -499,21 +508,25 @@ var myGasChart;
   {
     if (activeTab != "ActualTab") return;
 
-    //console.log("Now in showActualGraph()..");
+    try {
+        //console.log("Now in showActualGraph()..");
 
-    //--- hide Table
-    document.getElementById("actual").style.display    = "none";
-    //--- show canvas
-    document.getElementById("dataChart").style.display = "block";
-    document.getElementById("gasChart").style.display  = "block";
-    
-    renderElectrChart(actElectrData, actElectrOptions);
-    myElectrChart.update();
-    
-    //renderGasChart(actGasData, actGasOptions);
-    renderGasChart(actGasData, "dm3");
-    gasChart.update();
+        //--- hide Table
+        document.getElementById("actual").style.display    = "none";
+        //--- show canvas
+        document.getElementById("dataChart").style.display = "block";
+        document.getElementById("gasChart").style.display  = "block";
+        
+        renderElectrChart(actElectrData, actElectrOptions);
+        myElectrChart.update();
+        
+        renderGasChart(actGasData, "dm3");
+        myGasChart.update(); //gasChart.update();
 
+    } catch (error) {
+      console.error("Error in showActualGraph:", error);
+    }
+    
   } // showActualGraph()
   
   
@@ -521,6 +534,12 @@ var myGasChart;
   function formatGraphDate(type, dateIn) 
   {
     let dateOut = "";
+    dateIn = String(dateIn);
+    console.log("dateIn is ["+dateIn+"], type is ["+ typeof dateIn +"]");
+    //console.log("Hours ["+dateIn.substring(4,6)+ dateIn.substring(6,8)+"]");
+    //console.log("Days ["+recidToWeekday(dateIn), dateIn.substring(4,6)+"-"+dateIn.substring(2,4)+"]");
+    //console.log("Actual ["+dateIn.substring(6,8)+":"+dateIn.substring(8,10)+":"+dateIn.substring(10,12)+"]");
+
     if (type == "Hours")
     {
       dateOut = "("+dateIn.substring(4,6)+") "+dateIn.substring(6,8);
