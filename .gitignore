@@ -1,4 +1,5 @@
-
+.pio.nosync
+.pio
 *.bin
 data/DSMRsettings.ini
 data/RINGdays.csv
